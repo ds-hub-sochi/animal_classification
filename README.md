@@ -69,7 +69,7 @@ python ./irbis_classifier/cli/reports/test_augmentations.py \
 ```
 
 ```bash
-nohup python ./irbis_classifier/cli/training/start_training.py --path_to_config ./data/configs/training_config.json &
+nohup python ./irbis_classifier/cli/training/start_pretraining.py --path_to_config ./data/configs/training_config.json &
 ```
 
 ```bash
