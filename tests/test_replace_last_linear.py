@@ -1,6 +1,7 @@
 from collections import OrderedDict
 
 import numpy as np
+import pytest
 import torch
 from torch import nn
 from torchvision import models
@@ -224,3 +225,51 @@ def test_real_convnext():
 
     for p1, p2 in zip(list(model.parameters())[:-2], list(model_modified.parameters())[:-2]):
         assert np.allclose(p1.data.ne(p2.data).sum().item(), 0)
+
+
+def test_old_wieghts_reusage():
+    simple_model: nn.Module = nn.Sequential(
+        nn.Linear(
+            2,
+            3,
+        ),
+        nn.ReLU(),
+        nn.Linear(
+            3,
+            4,
+        ),
+    )
+
+    simple_model[2].weight.data.fill_(0.01)
+
+    old_value: torch.Tensor = simple_model[2].weight.data
+
+    simple_model = replace_last_linear(
+        simple_model,
+        8,
+        True,
+    )
+
+    assert torch.allclose(simple_model[2].weight[:4, :], old_value)
+    assert simple_model[2].weight.requires_grad
+
+
+def test_reuse_old_weight_throw_error():
+    simple_model: nn.Module = nn.Sequential(
+        nn.Linear(
+            2,
+            3,
+        ),
+        nn.ReLU(),
+        nn.Linear(
+            3,
+            4,
+        ),
+    )
+
+    with pytest.raises(ValueError):
+        simple_model = replace_last_linear(
+            simple_model,
+            2,
+            True,
+        )
