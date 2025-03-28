@@ -81,7 +81,7 @@ class LossParams:
 
 
 @dataclass
-class TrainingConfig:  # pylint: disable=too-many-instance-attributes
+class PretrainingConfig:  # pylint: disable=too-many-instance-attributes
     path_to_data_dir: str | Path
     path_to_checkpoints_dir: str | Path
     path_to_experiment_config: str | Path
@@ -152,7 +152,7 @@ def start_training(  # pylint: disable=too-many-statements,too-many-locals
         'r',
         encoding='utf-8',
     ) as json_file:
-        config: TrainingConfig = TrainingConfig(**json.load(json_file))
+        config: PretrainingConfig = PretrainingConfig(**json.load(json_file))
 
     repository_root_dir: Path  = Path(__file__).parent.parent.parent.parent.resolve()
 
