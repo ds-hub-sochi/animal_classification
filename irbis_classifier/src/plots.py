@@ -122,8 +122,9 @@ def create_classes_difference_bar_plot_over_split(  # pylint: disable=too-many-l
 
     data_dir = Path(data_dir).resolve()
 
-    splits: list[str] = [f.path.split('/')[-1] for f in os.scandir(data_dir) if data_dir.is_dir()]
-    splits = [split for split in splits if split.endswith('csv')]
+    # splits: list[str] = [f.path.split('/')[-1] for f in os.scandir(data_dir) if data_dir.is_dir()]
+    # splits = [split for split in splits if split.endswith('csv')]
+    splits = ["train.csv", "val.csv", "test.csv"]
 
     labels: set[str] = set()
     for split in splits:
@@ -169,6 +170,7 @@ def create_classes_difference_bar_plot_over_split(  # pylint: disable=too-many-l
                 padding=padding,
                 fontsize=SMALL_SIZE,
                 label_type='edge',
+                rotation=45,
             )
             multiplier += 1
 

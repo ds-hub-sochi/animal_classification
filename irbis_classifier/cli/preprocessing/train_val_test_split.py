@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from glob import glob
+from math import ceil
 from pathlib import Path
 
 import click
@@ -35,7 +36,8 @@ def split_and_save(  # pylint: disable=too-many-locals
             markup_filepath = path_to_markup_dir / stage / label / f'{filename}.txt'
 
             if not Path.is_file(markup_filepath):
-                logger.warning(f"markup for {stage}/{label}/{filename} wasn't found")
+                # logger.warning(f"markup for {stage}/{label}/{filename} wasn't found")
+
                 return False
 
             return True
@@ -66,19 +68,21 @@ def split_and_save(  # pylint: disable=too-many-locals
 
             split_indexes: list[int] = []
             current_subpart_size: int = 0
-            while ((index_i < len(sequences)) and (current_subpart_size < round(train_size * specie_subdf.shape[0]))):
+            while ((index_i < len(sequences)) and (current_subpart_size < ceil(train_size * specie_subdf.shape[0]))):
                 current_subpart_size += sequence_to_length[sequences[index_i]]
                 split_indexes.extend(list(specie_subdf[specie_subdf.sequence == sequences[index_i]].index))
                 index_i += 1
-            train_df = pd.concat([train_df, specie_subdf.loc[np.array(split_indexes)]])
+            current_train_subdf = specie_subdf.loc[np.array(split_indexes)]
+            train_df = pd.concat([train_df, current_train_subdf])
 
             split_indexes = []
             current_subpart_size = 0
-            while ((index_i < len(sequences)) and (current_subpart_size < round(val_size * specie_subdf.shape[0]))):
+            while ((index_i < len(sequences)) and (current_subpart_size < ceil(val_size * specie_subdf.shape[0]))):
                 current_subpart_size += sequence_to_length[sequences[index_i]]
                 split_indexes.extend(list(specie_subdf[specie_subdf.sequence == sequences[index_i]].index))
                 index_i += 1
-            val_df = pd.concat([val_df, specie_subdf.loc[np.array(split_indexes)]])
+            current_val_subdf = specie_subdf.loc[np.array(split_indexes)]
+            # val_df = pd.concat([val_df, specie_subdf.loc[np.array(split_indexes)]])
 
             split_indexes = []
             current_subpart_size = 0
@@ -86,7 +90,19 @@ def split_and_save(  # pylint: disable=too-many-locals
                 current_subpart_size += sequence_to_length[sequences[index_i]]
                 split_indexes.extend(list(specie_subdf[specie_subdf.sequence == sequences[index_i]].index))
                 index_i += 1
-            test_df = pd.concat([test_df, specie_subdf.loc[np.array(split_indexes)]])
+            current_test_subdf = specie_subdf.loc[np.array(split_indexes)]
+            # test_df = pd.concat([test_df, specie_subdf.loc[np.array(split_indexes)]])
+
+            if current_test_subdf.shape[0] > current_val_subdf.shape[0]:
+                current_test_subdf, current_val_subdf = current_val_subdf, current_test_subdf
+
+            val_df = pd.concat([val_df, current_val_subdf])
+            test_df = pd.concat([test_df, current_test_subdf])
+
+            logger.info(
+                f"{specie}: train - {current_train_subdf.shape[0]}, val - {current_val_subdf.shape[0]}, " + \
+                f"test - {current_test_subdf.shape[0]}"
+            )
 
     logger.info(f'train size: {train_df.shape[0]}')
     train_df.to_csv(
@@ -104,6 +120,11 @@ def split_and_save(  # pylint: disable=too-many-locals
     test_df.to_csv(
         dir_to_save / 'test.csv',
         index=False,
+    )
+
+    logger.info(
+        f"final shapes: train - {train_df.shape[0]}, val - {val_df.shape[0]}, " + \
+        f"test - {test_df.shape[0]}"
     )
 
     logger.success('train/val/test split ended')
